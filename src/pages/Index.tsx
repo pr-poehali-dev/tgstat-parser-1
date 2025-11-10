@@ -6,30 +6,110 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 import Icon from '@/components/ui/icon';
 
-const mockChannels = [
-  { id: 1, name: 'MarketingPro', subscribers: 120000, category: 'Маркетинг', admin: '@admin1', lastChecked: '2025-11-11', status: 'active' },
-  { id: 2, name: 'PRinsider', subscribers: 45000, category: 'PR', admin: '@owner', lastChecked: '2025-11-10', status: 'active' },
-  { id: 3, name: 'DigitalStrategy', subscribers: 89000, category: 'Маркетинг', admin: '@strategist', lastChecked: '2025-11-11', status: 'active' },
-  { id: 4, name: 'BrandVoice', subscribers: 32000, category: 'PR', admin: '@brand_admin', lastChecked: '2025-11-09', status: 'inactive' },
+interface Channel {
+  id: number;
+  name: string;
+  slug: string;
+  subscribers: number;
+  category: string;
+  admin: string;
+  lastChecked: string;
+  status: 'active' | 'inactive';
+  description: string;
+  tgLink: string;
+  language: string;
+  postsPerDay: number;
+  avgViews: number;
+  contacts: string[];
+}
+
+const mockChannels: Channel[] = [
+  { 
+    id: 1, 
+    name: 'MarketingPro', 
+    slug: '@marketingpro',
+    subscribers: 120000, 
+    category: 'Маркетинг', 
+    admin: '@admin1', 
+    lastChecked: '2025-11-11', 
+    status: 'active',
+    description: 'Профессиональный канал о маркетинге, стратегиях продвижения и актуальных трендах digital-рынка. Экспертные советы и кейсы.',
+    tgLink: 'https://t.me/marketingpro',
+    language: 'Русский',
+    postsPerDay: 3.5,
+    avgViews: 8500,
+    contacts: ['admin@marketingpro.com', '@support_bot']
+  },
+  { 
+    id: 2, 
+    name: 'PRinsider', 
+    slug: '@prinsider',
+    subscribers: 45000, 
+    category: 'PR', 
+    admin: '@owner', 
+    lastChecked: '2025-11-10', 
+    status: 'active',
+    description: 'Инсайды из мира PR и медиа. Новости, аналитика, экспертные мнения о публичных коммуникациях.',
+    tgLink: 'https://t.me/prinsider',
+    language: 'Русский',
+    postsPerDay: 2.1,
+    avgViews: 3200,
+    contacts: ['pr@insider.ru']
+  },
+  { 
+    id: 3, 
+    name: 'DigitalStrategy', 
+    slug: '@digitalstrategy',
+    subscribers: 89000, 
+    category: 'Маркетинг', 
+    admin: '@strategist', 
+    lastChecked: '2025-11-11', 
+    status: 'active',
+    description: 'Канал о digital-стратегиях, аналитике и инструментах онлайн-маркетинга. Разборы успешных кампаний.',
+    tgLink: 'https://t.me/digitalstrategy',
+    language: 'Русский',
+    postsPerDay: 4.2,
+    avgViews: 12000,
+    contacts: ['info@digitalstrat.com', '@strategy_admin']
+  },
+  { 
+    id: 4, 
+    name: 'BrandVoice', 
+    slug: '@brandvoice',
+    subscribers: 32000, 
+    category: 'PR', 
+    admin: '@brand_admin', 
+    lastChecked: '2025-11-09', 
+    status: 'inactive',
+    description: 'Всё о брендинге и позиционировании. Создание сильных брендов и управление репутацией.',
+    tgLink: 'https://t.me/brandvoice',
+    language: 'Русский',
+    postsPerDay: 1.8,
+    avgViews: 2100,
+    contacts: ['hello@brandvoice.ru']
+  },
 ];
 
 const mockJobs = [
-  { id: 231, name: 'Full Scan', status: 'running', progress: 67 },
-  { id: 230, name: 'Re-scrape', status: 'failed', progress: 0 },
-  { id: 229, name: 'Snapshot', status: 'completed', progress: 100 },
+  { id: 231, name: 'Полный скан', status: 'running', progress: 67 },
+  { id: 230, name: 'Повторный сбор', status: 'failed', progress: 0 },
+  { id: 229, name: 'Снимок данных', status: 'completed', progress: 100 },
 ];
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
 
   const stats = [
-    { label: 'Channels collected', value: '12,834', trend: '+234', icon: 'Database' },
-    { label: 'Active jobs', value: '3', trend: 'Queue: Celery', icon: 'Activity' },
-    { label: 'Failed (24h)', value: '2', trend: 'Alerts enabled', icon: 'AlertCircle', variant: 'destructive' },
-    { label: 'Export ready', value: '5', trend: 'Last: 11 Nov', icon: 'FileDown' },
+    { label: 'Собрано каналов', value: '12,834', trend: '+234', icon: 'Database' },
+    { label: 'Активных задач', value: '3', trend: 'Очередь: Celery', icon: 'Activity' },
+    { label: 'Ошибок (24ч)', value: '2', trend: 'Алерты включены', icon: 'AlertCircle', variant: 'destructive' },
+    { label: 'Готово к экспорту', value: '5', trend: 'Последний: 11 ноя', icon: 'FileDown' },
   ];
 
   return (
@@ -42,7 +122,7 @@ export default function Index() {
                 TG
               </div>
               <div>
-                <h1 className="text-lg font-semibold text-gray-900">TGStat Parser</h1>
+                <h1 className="text-lg font-semibold text-gray-900">TGStat Парсер</h1>
                 <p className="text-xs text-gray-500">Production v1.0</p>
               </div>
             </div>
@@ -58,7 +138,7 @@ export default function Index() {
               }`}
             >
               <Icon name="LayoutDashboard" size={18} />
-              Dashboard
+              Дашборд
             </button>
             <button
               onClick={() => setActiveTab('scrape')}
@@ -69,7 +149,7 @@ export default function Index() {
               }`}
             >
               <Icon name="Play" size={18} />
-              Scrape Control
+              Управление
             </button>
             <button
               onClick={() => setActiveTab('channels')}
@@ -80,7 +160,7 @@ export default function Index() {
               }`}
             >
               <Icon name="Radio" size={18} />
-              Channels
+              Каналы
             </button>
             <button
               onClick={() => setActiveTab('jobs')}
@@ -91,21 +171,21 @@ export default function Index() {
               }`}
             >
               <Icon name="ListChecks" size={18} />
-              Jobs / Logs
+              Задачи
             </button>
           </nav>
 
           <div className="mt-8 pt-6 border-t border-gray-200 space-y-3 text-sm">
             <div className="flex items-center justify-between text-gray-600">
-              <span>Proxies</span>
+              <span>Прокси</span>
               <span className="font-semibold text-gray-900">12</span>
             </div>
             <div className="flex items-center justify-between text-gray-600">
-              <span>Queue length</span>
+              <span>Очередь</span>
               <span className="font-semibold text-gray-900">4</span>
             </div>
             <div className="text-xs text-gray-500 pt-2">
-              Last job: <span className="font-medium">11 Nov, 10:12</span>
+              Последняя задача: <span className="font-medium">11 ноя, 10:12</span>
             </div>
           </div>
         </aside>
@@ -114,10 +194,10 @@ export default function Index() {
           <header className="mb-8 flex items-center justify-between">
             <div>
               <h2 className="text-3xl font-bold text-gray-900 mb-1">
-                {activeTab === 'dashboard' && 'Dashboard'}
-                {activeTab === 'scrape' && 'Scrape Control'}
-                {activeTab === 'channels' && 'Channels'}
-                {activeTab === 'jobs' && 'Jobs & Logs'}
+                {activeTab === 'dashboard' && 'Дашборд'}
+                {activeTab === 'scrape' && 'Управление парсингом'}
+                {activeTab === 'channels' && 'Каналы'}
+                {activeTab === 'jobs' && 'Задачи и логи'}
               </h2>
               <p className="text-gray-600">
                 {activeTab === 'dashboard' && 'Мониторинг и статистика парсера'}
@@ -129,11 +209,11 @@ export default function Index() {
             <div className="flex items-center gap-3">
               <Button variant="outline" className="gap-2">
                 <Icon name="Settings" size={16} />
-                Settings
+                Настройки
               </Button>
               <Button className="gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-200">
                 <Icon name="Play" size={16} />
-                Start Full Scan
+                Запустить полный скан
               </Button>
             </div>
           </header>
@@ -168,10 +248,10 @@ export default function Index() {
                   <CardContent>
                     <div className="space-y-4">
                       {[
-                        { date: '11 Nov', channels: 834, color: 'from-indigo-500 to-violet-500' },
-                        { date: '10 Nov', channels: 612, color: 'from-indigo-400 to-violet-400' },
-                        { date: '9 Nov', channels: 789, color: 'from-indigo-300 to-violet-300' },
-                        { date: '8 Nov', channels: 543, color: 'from-indigo-200 to-violet-200' },
+                        { date: '11 ноя', channels: 834, color: 'from-indigo-500 to-violet-500' },
+                        { date: '10 ноя', channels: 612, color: 'from-indigo-400 to-violet-400' },
+                        { date: '9 ноя', channels: 789, color: 'from-indigo-300 to-violet-300' },
+                        { date: '8 ноя', channels: 543, color: 'from-indigo-200 to-violet-200' },
                       ].map((day, idx) => (
                         <div key={idx} className="flex items-center gap-3">
                           <div className="text-sm font-medium text-gray-600 w-16">{day.date}</div>
@@ -199,9 +279,9 @@ export default function Index() {
                         <div key={job.id} className="space-y-2">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-gray-900">Job #{job.id}</span>
+                              <span className="text-sm font-medium text-gray-900">Задача #{job.id}</span>
                               <Badge variant={job.status === 'running' ? 'default' : job.status === 'failed' ? 'destructive' : 'secondary'}>
-                                {job.status}
+                                {job.status === 'running' ? 'выполняется' : job.status === 'failed' ? 'ошибка' : 'завершена'}
                               </Badge>
                             </div>
                             <span className="text-sm text-gray-600">{job.progress}%</span>
@@ -222,7 +302,7 @@ export default function Index() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Category</label>
+                      <label className="text-sm font-medium text-gray-700">Категория</label>
                       <Select defaultValue="marketing">
                         <SelectTrigger>
                           <SelectValue />
@@ -234,46 +314,46 @@ export default function Index() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Concurrency</label>
+                      <label className="text-sm font-medium text-gray-700">Параллельность</label>
                       <Input type="number" defaultValue={6} />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Use proxies</label>
+                      <label className="text-sm font-medium text-gray-700">Использовать прокси</label>
                       <Select defaultValue="yes">
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="yes">Yes</SelectItem>
-                          <SelectItem value="no">No</SelectItem>
+                          <SelectItem value="yes">Да</SelectItem>
+                          <SelectItem value="no">Нет</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-3 block">Presets</label>
+                    <label className="text-sm font-medium text-gray-700 mb-3 block">Пресеты</label>
                     <div className="flex gap-3">
                       <Button variant="outline" className="gap-2">
                         <Icon name="Zap" size={16} />
-                        Fast
+                        Быстрый
                       </Button>
                       <Button variant="outline" className="gap-2">
                         <Icon name="Database" size={16} />
-                        Full (all fields)
+                        Полный (все поля)
                       </Button>
                       <Button variant="outline" className="gap-2">
                         <Icon name="Camera" size={16} />
-                        Snapshot + Raw
+                        Снимок + Raw
                       </Button>
                     </div>
                   </div>
 
                   <div className="pt-4 border-t flex justify-end gap-3">
-                    <Button variant="outline">Save preset</Button>
+                    <Button variant="outline">Сохранить пресет</Button>
                     <Button className="gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
                       <Icon name="Play" size={16} />
-                      Start Full Scan
+                      Запустить полный скан
                     </Button>
                   </div>
                 </div>
@@ -288,14 +368,14 @@ export default function Index() {
                   <CardTitle className="text-lg">База каналов</CardTitle>
                   <div className="flex items-center gap-3">
                     <Input
-                      placeholder="Search by name, admin, tag..."
+                      placeholder="Поиск по названию, админу, тегу..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-80"
                     />
                     <Button className="gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
                       <Icon name="FileDown" size={16} />
-                      Export XLSX
+                      Экспорт XLSX
                     </Button>
                   </div>
                 </div>
@@ -304,17 +384,18 @@ export default function Index() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Subscribers</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Admin</TableHead>
-                      <TableHead>Last checked</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Название</TableHead>
+                      <TableHead>Подписчики</TableHead>
+                      <TableHead>Категория</TableHead>
+                      <TableHead>Админ</TableHead>
+                      <TableHead>Проверен</TableHead>
+                      <TableHead>Статус</TableHead>
+                      <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {mockChannels
-                      .filter((ch) => ch.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                      .filter((ch) => ch.name.toLowerCase().includes(searchQuery.toLowerCase()) || ch.slug.toLowerCase().includes(searchQuery.toLowerCase()))
                       .map((channel) => (
                         <TableRow key={channel.id} className="hover:bg-gray-50">
                           <TableCell className="font-medium">{channel.name}</TableCell>
@@ -326,8 +407,19 @@ export default function Index() {
                           <TableCell className="text-gray-600 text-sm">{channel.lastChecked}</TableCell>
                           <TableCell>
                             <Badge variant={channel.status === 'active' ? 'default' : 'secondary'}>
-                              {channel.status}
+                              {channel.status === 'active' ? 'активен' : 'неактивен'}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="gap-1"
+                              onClick={() => setSelectedChannel(channel)}
+                            >
+                              <Icon name="Eye" size={14} />
+                              Просмотр
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -344,9 +436,9 @@ export default function Index() {
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="text-lg font-semibold text-gray-900">Job #{job.id}</div>
+                        <div className="text-lg font-semibold text-gray-900">Задача #{job.id}</div>
                         <Badge variant={job.status === 'running' ? 'default' : job.status === 'failed' ? 'destructive' : 'secondary'}>
-                          {job.status}
+                          {job.status === 'running' ? 'выполняется' : job.status === 'failed' ? 'ошибка' : 'завершена'}
                         </Badge>
                         <span className="text-sm text-gray-600">{job.name}</span>
                       </div>
@@ -354,19 +446,19 @@ export default function Index() {
                         {job.status === 'failed' && (
                           <Button size="sm" variant="outline" className="gap-2">
                             <Icon name="RotateCw" size={14} />
-                            Retry
+                            Повторить
                           </Button>
                         )}
                         <Button size="sm" variant="ghost" className="gap-2">
                           <Icon name="Eye" size={14} />
-                          View logs
+                          Логи
                         </Button>
                       </div>
                     </div>
                     {job.status !== 'failed' && <Progress value={job.progress} className="h-2" />}
                     {job.status === 'failed' && (
                       <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
-                        Error: captcha detected at page 47
+                        Ошибка: обнаружена капча на странице 47
                       </div>
                     )}
                   </CardContent>
@@ -376,6 +468,106 @@ export default function Index() {
           )}
         </main>
       </div>
+
+      <Dialog open={!!selectedChannel} onOpenChange={() => setSelectedChannel(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 text-white">
+                <Icon name="Radio" size={24} />
+              </div>
+              {selectedChannel?.name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedChannel && (
+            <div className="space-y-6 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Telegram-ссылка</div>
+                  <a href={selectedChannel.tgLink} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline font-medium flex items-center gap-1">
+                    {selectedChannel.slug}
+                    <Icon name="ExternalLink" size={14} />
+                  </a>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Администратор</div>
+                  <div className="font-medium">{selectedChannel.admin}</div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <div className="text-sm text-gray-500 mb-2">Описание</div>
+                <p className="text-gray-700 leading-relaxed">{selectedChannel.description}</p>
+              </div>
+
+              <Separator />
+
+              <div className="grid grid-cols-3 gap-6">
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Подписчики</div>
+                  <div className="text-2xl font-bold text-gray-900 tabular-nums">{selectedChannel.subscribers.toLocaleString()}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Постов в день</div>
+                  <div className="text-2xl font-bold text-gray-900 tabular-nums">{selectedChannel.postsPerDay}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Ср. просмотры</div>
+                  <div className="text-2xl font-bold text-gray-900 tabular-nums">{selectedChannel.avgViews.toLocaleString()}</div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Язык</div>
+                  <Badge variant="outline">{selectedChannel.language}</Badge>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Категория</div>
+                  <Badge variant="outline">{selectedChannel.category}</Badge>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <div className="text-sm text-gray-500 mb-2">Контакты</div>
+                <div className="flex flex-wrap gap-2">
+                  {selectedChannel.contacts.map((contact, idx) => (
+                    <Badge key={idx} variant="secondary" className="gap-1">
+                      <Icon name="Mail" size={12} />
+                      {contact}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between pt-2">
+                <div className="text-sm text-gray-500">
+                  Последняя проверка: <span className="font-medium text-gray-900">{selectedChannel.lastChecked}</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Icon name="RefreshCw" size={14} />
+                    Пересобрать
+                  </Button>
+                  <Button size="sm" className="gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
+                    <Icon name="FileDown" size={14} />
+                    Экспорт
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
