@@ -28,6 +28,7 @@ interface Channel {
 }
 
 const API_URL = 'https://functions.poehali.dev/e7b44188-edc8-4271-996e-a3ca0efd9370';
+const EXPORT_URL = 'https://functions.poehali.dev/fb020deb-3889-4882-aa77-eabbb5cefc0b';
 
 const mockJobs = [
   { id: 231, name: 'Полный скан', status: 'running', progress: 67 },
@@ -85,6 +86,24 @@ export default function Index() {
     setSearchQuery(value);
     if (value.length > 2 || value.length === 0) {
       fetchChannels(value);
+    }
+  };
+
+  const exportToExcel = async (format: 'xlsx' | 'csv' = 'xlsx') => {
+    try {
+      const response = await fetch(`${EXPORT_URL}?format=${format}`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `tgstat_channels.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Ошибка экспорта:', error);
+      alert('Ошибка при экспорте данных');
     }
   };
 
@@ -360,10 +379,23 @@ export default function Index() {
                       onChange={(e) => handleSearch(e.target.value)}
                       className="w-80"
                     />
-                    <Button className="gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
-                      <Icon name="FileDown" size={16} />
-                      Экспорт XLSX
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        className="gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
+                        onClick={() => exportToExcel('xlsx')}
+                      >
+                        <Icon name="FileDown" size={16} />
+                        Экспорт XLSX
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => exportToExcel('csv')}
+                      >
+                        <Icon name="FileText" size={16} />
+                        CSV
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardHeader>
@@ -555,7 +587,11 @@ export default function Index() {
                     <Icon name="RefreshCw" size={14} />
                     Пересобрать
                   </Button>
-                  <Button size="sm" className="gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
+                  <Button 
+                    size="sm" 
+                    className="gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
+                    onClick={() => exportToExcel('xlsx')}
+                  >
                     <Icon name="FileDown" size={14} />
                     Экспорт
                   </Button>

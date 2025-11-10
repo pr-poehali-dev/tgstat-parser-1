@@ -1,0 +1,22 @@
+{
+  "tests": [
+    {
+      "name": "Экспорт в CSV",
+      "method": "GET",
+      "path": "/?format=csv",
+      "expectedStatus": 200,
+      "expectedHeaders": {
+        "Content-Type": "text/csv; charset=utf-8"
+      }
+    },
+    {
+      "name": "Экспорт в XLSX",
+      "method": "GET",
+      "path": "/?format=xlsx",
+      "expectedStatus": 200,
+      "expectedHeaders": {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      }
+    }
+  ]
+}
