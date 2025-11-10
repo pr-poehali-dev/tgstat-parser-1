@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,72 +27,7 @@ interface Channel {
   contacts: string[];
 }
 
-const mockChannels: Channel[] = [
-  { 
-    id: 1, 
-    name: 'MarketingPro', 
-    slug: '@marketingpro',
-    subscribers: 120000, 
-    category: 'Маркетинг', 
-    admin: '@admin1', 
-    lastChecked: '2025-11-11', 
-    status: 'active',
-    description: 'Профессиональный канал о маркетинге, стратегиях продвижения и актуальных трендах digital-рынка. Экспертные советы и кейсы.',
-    tgLink: 'https://t.me/marketingpro',
-    language: 'Русский',
-    postsPerDay: 3.5,
-    avgViews: 8500,
-    contacts: ['admin@marketingpro.com', '@support_bot']
-  },
-  { 
-    id: 2, 
-    name: 'PRinsider', 
-    slug: '@prinsider',
-    subscribers: 45000, 
-    category: 'PR', 
-    admin: '@owner', 
-    lastChecked: '2025-11-10', 
-    status: 'active',
-    description: 'Инсайды из мира PR и медиа. Новости, аналитика, экспертные мнения о публичных коммуникациях.',
-    tgLink: 'https://t.me/prinsider',
-    language: 'Русский',
-    postsPerDay: 2.1,
-    avgViews: 3200,
-    contacts: ['pr@insider.ru']
-  },
-  { 
-    id: 3, 
-    name: 'DigitalStrategy', 
-    slug: '@digitalstrategy',
-    subscribers: 89000, 
-    category: 'Маркетинг', 
-    admin: '@strategist', 
-    lastChecked: '2025-11-11', 
-    status: 'active',
-    description: 'Канал о digital-стратегиях, аналитике и инструментах онлайн-маркетинга. Разборы успешных кампаний.',
-    tgLink: 'https://t.me/digitalstrategy',
-    language: 'Русский',
-    postsPerDay: 4.2,
-    avgViews: 12000,
-    contacts: ['info@digitalstrat.com', '@strategy_admin']
-  },
-  { 
-    id: 4, 
-    name: 'BrandVoice', 
-    slug: '@brandvoice',
-    subscribers: 32000, 
-    category: 'PR', 
-    admin: '@brand_admin', 
-    lastChecked: '2025-11-09', 
-    status: 'inactive',
-    description: 'Всё о брендинге и позиционировании. Создание сильных брендов и управление репутацией.',
-    tgLink: 'https://t.me/brandvoice',
-    language: 'Русский',
-    postsPerDay: 1.8,
-    avgViews: 2100,
-    contacts: ['hello@brandvoice.ru']
-  },
-];
+const API_URL = 'https://functions.poehali.dev/e7b44188-edc8-4271-996e-a3ca0efd9370';
 
 const mockJobs = [
   { id: 231, name: 'Полный скан', status: 'running', progress: 67 },
@@ -104,9 +39,57 @@ export default function Index() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [scraping, setScraping] = useState(false);
+  const [totalChannels, setTotalChannels] = useState(0);
+
+  useEffect(() => {
+    fetchChannels();
+  }, []);
+
+  const fetchChannels = async (query = '') => {
+    setLoading(true);
+    try {
+      const url = query ? `${API_URL}?query=${encodeURIComponent(query)}` : API_URL;
+      const response = await fetch(url);
+      const data = await response.json();
+      setChannels(data.channels || []);
+      setTotalChannels(data.total || 0);
+    } catch (error) {
+      console.error('Ошибка загрузки каналов:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startScraping = async () => {
+    setScraping(true);
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await response.json();
+      alert(data.message || 'Парсинг завершён!');
+      fetchChannels();
+    } catch (error) {
+      console.error('Ошибка парсинга:', error);
+      alert('Ошибка при запуске парсинга');
+    } finally {
+      setScraping(false);
+    }
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchQuery(value);
+    if (value.length > 2 || value.length === 0) {
+      fetchChannels(value);
+    }
+  };
 
   const stats = [
-    { label: 'Собрано каналов', value: '12,834', trend: '+234', icon: 'Database' },
+    { label: 'Собрано каналов', value: totalChannels.toLocaleString(), trend: `В базе`, icon: 'Database' },
     { label: 'Активных задач', value: '3', trend: 'Очередь: Celery', icon: 'Activity' },
     { label: 'Ошибок (24ч)', value: '2', trend: 'Алерты включены', icon: 'AlertCircle', variant: 'destructive' },
     { label: 'Готово к экспорту', value: '5', trend: 'Последний: 11 ноя', icon: 'FileDown' },
@@ -211,9 +194,13 @@ export default function Index() {
                 <Icon name="Settings" size={16} />
                 Настройки
               </Button>
-              <Button className="gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-200">
+              <Button 
+                className="gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-200"
+                onClick={startScraping}
+                disabled={scraping}
+              >
                 <Icon name="Play" size={16} />
-                Запустить полный скан
+                {scraping ? 'Парсинг...' : 'Запустить полный скан'}
               </Button>
             </div>
           </header>
@@ -370,7 +357,7 @@ export default function Index() {
                     <Input
                       placeholder="Поиск по названию, админу, тегу..."
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(e) => handleSearch(e.target.value)}
                       className="w-80"
                     />
                     <Button className="gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
@@ -394,9 +381,19 @@ export default function Index() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mockChannels
-                      .filter((ch) => ch.name.toLowerCase().includes(searchQuery.toLowerCase()) || ch.slug.toLowerCase().includes(searchQuery.toLowerCase()))
-                      .map((channel) => (
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                          Загрузка...
+                        </TableCell>
+                      </TableRow>
+                    ) : channels.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                          Каналов не найдено. Нажмите "Запустить полный скан" для загрузки данных.
+                        </TableCell>
+                      </TableRow>
+                    ) : channels.map((channel) => (
                         <TableRow key={channel.id} className="hover:bg-gray-50">
                           <TableCell className="font-medium">{channel.name}</TableCell>
                           <TableCell className="tabular-nums">{channel.subscribers.toLocaleString()}</TableCell>

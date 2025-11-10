@@ -1,0 +1,36 @@
+{
+  "tests": [
+    {
+      "name": "Получение списка каналов",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "channels": "array",
+        "total": "number"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Поиск каналов",
+      "method": "GET",
+      "path": "/?query=marketing",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "channels": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Запуск парсинга",
+      "method": "POST",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "status": "success",
+        "inserted": "number"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
